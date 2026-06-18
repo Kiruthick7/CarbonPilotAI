@@ -3,7 +3,10 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useCarbonData } from "@/context/CarbonDataContext";
+import { useCarbonData, OcrData } from "@/context/CarbonDataContext";
+
+type Breakdown = { category: string; total_kgco2e: number; [key: string]: unknown };
+type IndividualResult = { inventory?: { breakdowns?: Breakdown[]; [key: string]: unknown }; [key: string]: unknown };
 
 export default function OnboardingPage() {
   const [files, setFiles] = useState<File[]>([]);
@@ -166,17 +169,17 @@ export default function OnboardingPage() {
       const data = await response.json();
       
       // Extract just the digital breakdown from the pure theoretical calculation
-      const digitalBreakdown = data.inventory.breakdowns.find((b: any) => b.category === "digital");
+      const digitalBreakdown = data.inventory.breakdowns.find((b: Breakdown) => b.category === "digital");
       
       // Keep existing inventory (with OCR overrides) but update digital
       // Keep existing inventory (with OCR overrides) but update digital
-      const newBreakdowns = ((tempOcrData.inventory?.breakdowns as any[]) || []).filter((b: any) => b.category !== "digital");
+      const newBreakdowns = ((tempOcrData.inventory?.breakdowns as Breakdown[]) || []).filter((b: Breakdown) => b.category !== "digital");
       if (digitalBreakdown) {
         newBreakdowns.push(digitalBreakdown);
       }
       
       // Recalculate total tCO2e
-      const newTotalKg = newBreakdowns.reduce((sum: number, b: any) => sum + b.total_kgco2e, 0);
+      const newTotalKg = newBreakdowns.reduce((sum: number, b: Breakdown) => sum + b.total_kgco2e, 0);
       
       const finalOcrData = {
         ...tempOcrData,
@@ -186,10 +189,10 @@ export default function OnboardingPage() {
           breakdowns: newBreakdowns,
           total_tco2e: Number((newTotalKg / 1000).toFixed(3))
         },
-        individual_results: (tempOcrData.individual_results as any[])?.map((res: any) => {
-          const resBreakdowns = ((res.inventory?.breakdowns as any[]) || []).filter((b: any) => b.category !== "digital");
+        individual_results: (tempOcrData.individual_results as IndividualResult[])?.map((res: IndividualResult) => {
+          const resBreakdowns = ((res.inventory?.breakdowns as Breakdown[]) || []).filter((b: Breakdown) => b.category !== "digital");
           if (digitalBreakdown) resBreakdowns.push(digitalBreakdown);
-          const resTotalKg = resBreakdowns.reduce((sum: number, b: any) => sum + b.total_kgco2e, 0);
+          const resTotalKg = resBreakdowns.reduce((sum: number, b: Breakdown) => sum + b.total_kgco2e, 0);
           return {
             ...res,
             profile: updatedProfile,
@@ -202,7 +205,7 @@ export default function OnboardingPage() {
         })
       };
       
-      setOcrData(finalOcrData);
+      setOcrData(finalOcrData as unknown as OcrData);
       router.push("/dashboard");
     } catch (err: unknown) {
       console.error(err);
