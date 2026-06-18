@@ -1,0 +1,128 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "carbonpilot-ai-backend"
+version = "1.0.0"
+description = "CarbonPilot AI – Personal Carbon Intelligence Backend"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "CarbonPilot AI Team" }]
+
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "groq>=0.13.0",
+    "structlog>=24.2.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "pillow>=10.4.0",
+    "redis>=5.0.0",
+    "pytesseract>=0.3.13",
+    "pdf2image>=1.17.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+    "coverage[toml]>=7.5.0",
+]
+
+[project.scripts]
+carbonpilot = "app.main:run"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# ---------------------------------------------------------------------------
+# Ruff – linting & formatting
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "ANN101", # self type annotation not required
+    "ANN102",
+    "B008",   # Do not perform function calls in argument defaults (Field, Depends)
+    "E501",   # Line too long
+    "UP042",
+    "E402",
+    "ANN001",
+    "ANN003",
+    "ANN202",
+    "ANN401",
+    "RUF005",
+    "E701",
+    "RUF001",
+    "RUF012",
+    "B904",
+    "ANN201",
+    "RUF002",
+    "S101",   # use of assert allowed in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN", "S"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# ---------------------------------------------------------------------------
+# mypy – static type checking
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+exclude = ["tests/"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ---------------------------------------------------------------------------
+# pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+# ---------------------------------------------------------------------------
+# coverage
+# ---------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["app"]
+omit = ["tests/*", "app/main.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

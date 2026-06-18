@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0mm; /* Forces removal of header/footer in most browsers */
+  }
+
+  body {
+    background: white;
+    color: black;
+    padding: 1.5cm; /* Adds padding back for readability */
+  }
+  
+  /* Hide sidebar and navigation */
+  aside, nav, .sidebar {
+    display: none !important;
+  }
+  
+  /* Expand main content */
+  main, .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  
+  /* Hide specific utility classes */
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Ensure page breaks don't cut cards in half */
+  .bg-white, .card, .action-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    margin-bottom: 20px !important;
+  }
+  
+  /* Remove backgrounds for ink saving */
+  .bg-slate-50, .bg-gray-50 {
+    background: transparent !important;
+    border: 1px solid #e5e7eb !important;
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "version": "2024.1",
+  "budget_1_5c_tco2e_per_person": 2.3,
+  "global_average_tco2e": 4.8,
+  "category_averages": {
+    "global": {
+      "transport_tco2e": 1.7,
+      "diet_tco2e":      1.4,
+      "home_tco2e":      0.9,
+      "consumption_tco2e": 0.8
+    },
+    "GB": {
+      "transport_tco2e": 1.8,
+      "diet_tco2e":      1.5,
+      "home_tco2e":      1.4,
+      "consumption_tco2e": 0.8
+    },
+    "US": {
+      "transport_tco2e": 4.7,
+      "diet_tco2e":      2.5,
+      "home_tco2e":      4.5,
+      "consumption_tco2e": 3.2
+    },
+    "IN": {
+      "transport_tco2e": 0.3,
+      "diet_tco2e":      0.8,
+      "home_tco2e":      0.5,
+      "consumption_tco2e": 0.3
+    }
+  },
+  "equivalences": {
+    "long_haul_flight_kg": 1620,
+    "short_haul_flight_kg": 255,
+    "petrol_car_year_kg": 1900,
+    "beef_burger_kg": 3.0,
+    "litre_of_milk_kg": 3.2,
+    "streaming_1hr_kg": 0.036,
+    "smartphone_manufacture_kg": 70.0,
+    "tree_year_sequestration_kg": 21.0,
+    "london_to_nyc_economy_kg": 986,
+    "average_uk_home_annual_heating_kg": 2436
+  },
+  "category_labels": {
+    "transport": "Transport",
+    "diet":      "Food & Diet",
+    "home":      "Home Energy",
+    "consumption": "Shopping & Consumption"
+  }
+}

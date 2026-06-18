@@ -1,0 +1,56 @@
+{
+  "version": "2024.1",
+  "sources": ["IPCC AR6", "IEA 2023", "EPA 2023", "DEFRA 2023"],
+  "transport": {
+    "car": {
+      "petrol":   { "kgCO2e_per_km": 0.192 },
+      "diesel":   { "kgCO2e_per_km": 0.171 },
+      "hybrid":   { "kgCO2e_per_km": 0.109 },
+      "electric": { "wh_per_km": 206 }
+    },
+    "flights": {
+      "short_haul_kg": 255,
+      "long_haul_kg": 1620,
+      "radiative_forcing_multiplier": 1.9
+    },
+    "bus":   { "kgCO2e_per_km": 0.089 },
+    "train": { "kgCO2e_per_km": 0.041 }
+  },
+  "diet": {
+    "vegan":        { "kgCO2e_per_day": 2.89 },
+    "vegetarian":   { "kgCO2e_per_day": 3.81 },
+    "flexitarian":  { "kgCO2e_per_day": 5.43 },
+    "omnivore":     { "kgCO2e_per_day": 7.19 },
+    "meat_heavy":   { "kgCO2e_per_day": 10.24 }
+  },
+  "food_waste_multipliers": {
+    "low":    1.0,
+    "medium": 1.12,
+    "high":   1.25
+  },
+  "home": {
+    "heating": {
+      "gas":      { "kgCO2e_per_kwh": 0.203 },
+      "oil":      { "kgCO2e_per_kwh": 0.298 },
+      "electric": { "kgCO2e_per_kwh": "grid" },
+      "heat_pump":{ "cop": 3.0, "kgCO2e_per_kwh_input": "grid" },
+      "district": { "kgCO2e_per_kwh": 0.117 }
+    },
+    "heating_kwh_per_year": {
+      "small":  8000,
+      "medium": 12000,
+      "large":  18000
+    },
+    "electricity_kwh_defaults": {
+      "small":  1800,
+      "medium": 2900,
+      "large":  4200
+    },
+    "renewable_electricity_multiplier": 0.05
+  },
+  "consumption": {
+    "clothing_per_item_kg":    8.0,
+    "electronics_per_device_kg": 70.0,
+    "delivery_per_order_kg":   0.5
+  }
+}
