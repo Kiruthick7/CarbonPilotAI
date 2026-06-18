@@ -3,6 +3,10 @@ import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Flow 6 - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/v1/actions/rank', async route => {
+      await route.fulfill({ json: { actions: [], total_achievable_reduction: 0 } }).catch(() => {});
+    });
+
     
     await page.addInitScript(() => {
       window.localStorage.setItem('carbonpilot_ocr_data', JSON.stringify({

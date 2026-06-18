@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Flow 2 - Manual Entry Journey', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/v1/actions/rank', async route => {
+      await route.fulfill({ json: { actions: [], total_achievable_reduction: 0 } }).catch(() => {});
+    });
+  });
+
   test('User can manually enter kWh and see dashboard', async ({ page }) => {
 
     await page.route('http://127.0.0.1:8000/v1/ocr/manual', async route => {

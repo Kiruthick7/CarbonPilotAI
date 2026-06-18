@@ -2,6 +2,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Flow 4 - Simulator', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/v1/actions/rank', async route => {
+      await route.fulfill({ json: { actions: [], total_achievable_reduction: 0 } }).catch(() => {});
+    });
+
     await page.addInitScript(() => {
       window.localStorage.setItem('carbonpilot_ocr_data', JSON.stringify({
         calculated_footprint_tco2e: 6.0,

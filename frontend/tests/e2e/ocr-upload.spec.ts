@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Flow 1 - OCR Upload Journey', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route('**/v1/actions/rank', async route => {
+      await route.fulfill({ json: { actions: [], total_achievable_reduction: 0 } }).catch(() => {});
+    });
+  });
+
   test('User can upload utility bill and view dashboard', async ({ page }) => {
 
     await page.route('http://127.0.0.1:8000/v1/actions/rank', async route => {
