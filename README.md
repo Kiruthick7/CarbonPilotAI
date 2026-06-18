@@ -10,14 +10,15 @@ CarbonPilot is a frictionless, zero-setup platform built to tackle the cognitive
 
 ## 🏆 The Problem & Our Solution
 
-**The Problem:** Most carbon footprint calculators require 15-30 minutes of tedious data entry. Users drop off before they even see their baseline. Furthermore, the advice provided is often generic (e.g., "Install Solar Panels" to a user who already has them or rents an apartment).
+**The Problem:** Most carbon footprint calculators require 15-30 minutes of tedious data entry. Users drop off before they even see their baseline. Furthermore, the advice provided is often generic (e.g., "Install Solar Panels" to a user who already has them or rents an apartment). And almost all of them ignore the massive hidden footprint of our modern digital lives.
 
 **The Solution:**
 1. **Zero-Friction Onboarding:** Drag and drop your utility bill. Our Multimodal OCR pipeline instantly extracts your exact kWh usage, location, and billing cycle.
-2. **Personalized Context:** We rank reduction actions dynamically against *your specific data*. 
-3. **Natural Language Simulations:** Want to know the impact of buying an EV *and* switching to a vegan diet? Just ask. Our hybrid AI architecture strictly parses natural language into deterministic mathematical scenarios.
+2. **Digital Lifestyle Footprint:** We explicitly track the carbon footprint of your modern digital consumption—cloud computing, heavy AI usage, streaming, and device upgrades.
+3. **Personalized Context:** We rank reduction actions dynamically against *your specific data* using an Impact-vs-Effort composite score.
+4. **Natural Language Simulations:** Want to know the impact of buying an EV *and* switching to a vegan diet? Just ask. Our hybrid AI architecture strictly parses natural language into deterministic mathematical scenarios.
 
-**Why It's Different:** We don't use AI to guess math. We use AI exclusively for unstructured parsing (OCR and Natural Language), while our Python backend handles deterministic ROI, break-even, and CO₂ reduction math. This guarantees accurate, hallucination-free financial and environmental modeling.
+**Why It's Different:** We don't use AI to guess math. We use AI exclusively for unstructured parsing (OCR and Natural Language) and intelligent orchestration, while our Python backend handles deterministic ROI, break-even, and CO₂ reduction math. This guarantees accurate, hallucination-free financial and environmental modeling.
 
 ### Why AI Does Not Calculate Emissions
 CarbonPilot explicitly partitions AI capabilities to prevent hallucinations in sustainability metrics.
@@ -44,6 +45,7 @@ CarbonPilot is a fully decoupled, stateless application designed for immense sca
 graph TD
     A[Next.js Frontend] -->|Utility Bill PDF| B(FastAPI Backend)
     A -->|Natural Language| C(/v1/simulate/ai)
+    A -->|Digital Profile| I
     
     B --> D{Vision OCR}
     D --> E[Groq Llama-3 Vision API]
@@ -153,4 +155,5 @@ Our calculations are rigorously backed by verifiable scientific sources to ensur
 * **Grid Intensity & Heating**: Based on the **EPA eGRID 2023** database for US regional baselines, utilizing average `kgCO2e/kWh` multipliers.
 * **Transport & Flights**: Adapted from **DEFRA 2023** conversion factors, applying a 1.9x radiative forcing multiplier for aviation emissions.
 * **Diet & Consumption**: Baselines sourced from **IPCC AR6** WGIII and the **IEA 2023** sector reports.
+* **Digital Lifestyle**: Based on Industry Averages for embodied hardware emissions and operational energy usage of streaming, gaming, and cloud AI infrastructure.
 * **Known Limitations:** In-memory rate limiting will isolate buckets across Cloud Run scaling instances.

@@ -30,5 +30,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Features
 - **OCR Upload**: Drag-and-drop interface for uploading utility bills.
+- **Digital Lifestyle Profile**: Dynamic forms to capture modern digital consumption (Cloud AI, Streaming).
 - **Interactive Simulator**: Real-time evaluation of stacked lifestyle changes.
 - **AI Chat Coach**: Context-aware chat interface for personalized sustainability advice.
