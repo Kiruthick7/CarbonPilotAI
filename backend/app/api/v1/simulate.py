@@ -77,7 +77,7 @@ async def simulate_ai_scenario(
         if not scenario_dicts:
             raise ValueError("Could not understand any actionable scenarios from your query. Try being more specific, e.g., 'Switch to an EV'.")
 
-        ta = TypeAdapter(Scenario)
+        ta: TypeAdapter[Scenario] = TypeAdapter(Scenario)
         scenarios = [ta.validate_python(sd) for sd in scenario_dicts]
 
         sim_request = SimulateRequest(

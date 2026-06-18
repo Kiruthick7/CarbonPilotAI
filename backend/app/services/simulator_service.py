@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+from typing import Any
+
 """
 simulator_service.py — aligned to existing models.
 """
 
-from __future__ import annotations
 
 import structlog
 
@@ -59,11 +62,11 @@ class SimulatorService:
         inventory: CarbonInventory,
         profile: CarbonProfile,
         scenario_type: str,
-        scenario_params: dict,
+        scenario_params: dict[str, Any],
     ) -> SimulateResponse:
         """Convenience method for the ranker — builds a SimulateRequest from parts."""
         from pydantic import TypeAdapter
-        scenario = TypeAdapter(Scenario).validate_python({"type": scenario_type, **scenario_params})
+        scenario: Scenario = TypeAdapter(Scenario).validate_python({"type": scenario_type, **scenario_params})
         return await self.simulate(SimulateRequest(
             inventory=inventory,
             profile=profile,

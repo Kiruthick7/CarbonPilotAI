@@ -37,6 +37,22 @@ CarbonPilot features a strictly delineated AI workflow:
 
 ---
 
+## 📸 Screenshots
+
+### Zero-Friction Onboarding
+![CarbonPilot Onboarding](docs/onboarding.png)
+
+### Real-Time Dashboard
+![CarbonPilot Dashboard](docs/dashboard.png)
+
+### Personalized Action Plan
+![CarbonPilot Action Plan](docs/action-plan.png)
+
+### AI-Powered Simulator
+![CarbonPilot AI Simulator](docs/simulator.png)
+
+---
+
 ## 🏗 Technical Architecture
 
 CarbonPilot is a fully decoupled, stateless application designed for immense scalability.
@@ -75,6 +91,13 @@ graph TD
 ## 🧪 Testing & Reliability
 
 * **Backend:** Comprehensive `pytest` coverage for all deterministic engines (Math, Simulation, Carbon Baseline) and API routing.
+  ```bash
+  cd backend
+  source venv/bin/activate
+  pytest
+  ruff check .
+  mypy .
+  ```
 * **Frontend:** A robust, mocked Playwright E2E suite covering all 6 core user flows across Chromium, Firefox, and WebKit.
   * Flow 1: OCR Upload Journey
   * Flow 2: Manual Entry Fallback
@@ -82,6 +105,10 @@ graph TD
   * Flow 4: Scenario Simulator
   * Flow 5: AI Natural Language Parsing
   * Flow 6: Accessibility Audits
+  ```bash
+  cd frontend
+  npm run test:e2e
+  ```
 * **Execution Time:** The entire UI test suite executes in < 15 seconds.
 
 ---
@@ -104,8 +131,8 @@ Tested rigorously using `@axe-core/playwright`.
    cd backend
    cp .env.example .env
    # IMPORTANT: Open .env and insert your GROQ_API_KEY
-   uv venv
-   source .venv/bin/activate
+   uv venv venv
+   source venv/bin/activate
    uv pip install -e .
    uvicorn app.main:app --reload
    ```
@@ -145,6 +172,18 @@ echo "NEXT_PUBLIC_API_URL=https://[your-cloud-run-url]/v1" > .env.production
 npm run build # Exports static site
 firebase deploy --only hosting
 ```
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+* `ENVIRONMENT`: Environment mode (`development`, `staging`, `production`) - determines logging and CORS strictness.
+* `GROQ_API_KEY`: API key for Groq's LLM services (required for OCR and AI Simulator).
+* `CORS_ORIGINS`: Comma-separated list of allowed frontend origins (e.g., `http://localhost:3000,https://my-app.web.app`).
+
+### Frontend (`frontend/.env.local`)
+* `NEXT_PUBLIC_API_URL`: URL of the FastAPI backend (e.g., `http://127.0.0.1:8000/v1`).
 
 ---
 

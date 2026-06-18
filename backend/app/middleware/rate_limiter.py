@@ -10,11 +10,13 @@ from __future__ import annotations
 import hashlib
 import time
 from collections import defaultdict
+from collections.abc import Awaitable, Callable
 
 import structlog
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
 
 logger = structlog.get_logger(__name__)
 
@@ -33,11 +35,11 @@ class SlidingWindowRateLimiter(BaseHTTPMiddleware):
     IP is SHA-256 hashed before storage — never stored raw.
     """
 
-    def __init__(self, app) -> None:  # type: ignore[override]
+    def __init__(self, app: ASGIApp) -> None:
         super().__init__(app)
         self._windows: dict[str, list[float]] = defaultdict(list)
 
-    async def dispatch(self, request: Request, call_next) -> Response:  # type: ignore[override]
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         path = request.url.path
         limit_cfg = self._match_limit(path)
         if limit_cfg is None:

@@ -97,4 +97,4 @@ def get_settings() -> Settings:
 
     Call ``get_settings.cache_clear()`` in tests to reset between runs.
     """
-    return Settings()  # type: ignore[call-arg]
+    return Settings()

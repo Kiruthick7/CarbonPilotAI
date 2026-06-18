@@ -6,9 +6,11 @@ All middleware, routers, and startup events are registered here.
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator, Awaitable, Callable
+
 import structlog
 import structlog.contextvars
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.health import router as health_router
@@ -50,7 +52,7 @@ def create_app() -> FastAPI:
     from contextlib import asynccontextmanager
 
     @asynccontextmanager
-    async def lifespan(app_instance: FastAPI):
+    async def lifespan(app_instance: FastAPI) -> AsyncGenerator[None, None]:
         from app.dependencies import get_loader
         get_loader()
         logger.info("carbonpilot_started", version=settings.app_version, env=settings.environment)
@@ -67,7 +69,7 @@ def create_app() -> FastAPI:
 
 
     @app.middleware("http")
-    async def security_headers(request, call_next):
+    async def security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"

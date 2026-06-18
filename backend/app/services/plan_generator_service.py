@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import structlog
 
-from app.engines.ranking_engine import ACTION_CATALOGUE
+from app.data.action_catalogue import ACTION_CATALOGUE
 from app.models.actions import (
     ExecutionPlan,
     ExecutionPlanResponse,
@@ -20,8 +20,10 @@ from app.services.simulator_service import SimulatorService
 logger = structlog.get_logger(__name__)
 
 
+from typing import Any
+
 # Hardcoded Demo-Ready Execution Steps and Resources
-HARDCODED_PLANS = {
+HARDCODED_PLANS: dict[str, Any] = {
     "switch_to_vegan": {
         "timeline_weeks": "1-2 weeks",
         "steps": [

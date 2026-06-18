@@ -7,7 +7,7 @@ Python 3.9 compatible — uses str+Enum mixin instead of StrEnum.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field
 
@@ -107,7 +107,7 @@ class PlanGenerationRequest(BaseModel):
     """Request body for POST /actions/generate-plan."""
     action_id: str = Field(..., description="The ID of the action to generate a plan for.")
     inventory: CarbonInventory = Field(..., description="User's current carbon inventory.")
-    profile: dict = Field(..., description="User's carbon profile dict.")
+    profile: dict[str, Any] = Field(..., description="User's carbon profile dict.")
 
 
 class ExecutionPlanResponse(BaseModel):

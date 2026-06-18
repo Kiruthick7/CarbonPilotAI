@@ -5,6 +5,9 @@ Pure scenario delta engine. No I/O.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from app.models.carbon import (
     CarbonInventory,
     CarbonProfile,
@@ -13,70 +16,83 @@ from app.models.carbon import (
     HeatingType,
 )
 from app.models.simulation import (
+    AddRenewableParams,
     CoBenefit,
     CoBenefitType,
+    ExtendDevicesParams,
+    ReduceConsumptionParams,
+    ReduceFlightsParams,
+    ReduceStreamingParams,
     Scenario,
     ScenarioType,
     SimulateResponse,
+    SwitchCarParams,
+    SwitchDietParams,
+    SwitchHeatingParams,
 )
 
 
 class SimulationEngine:
     """Applies a Scenario to a CarbonProfile to produce a modified profile."""
 
+    def __init__(self) -> None:
+        self._scenario_handlers: dict[ScenarioType, Callable[[dict[str, Any], Any], None]] = {
+            ScenarioType.SWITCH_DIET: self._handle_switch_diet,
+            ScenarioType.SWITCH_CAR: self._handle_switch_car,
+            ScenarioType.REDUCE_FLIGHTS: self._handle_reduce_flights,
+            ScenarioType.SWITCH_HEATING: self._handle_switch_heating,
+            ScenarioType.ADD_RENEWABLE: self._handle_add_renewable,
+            ScenarioType.REDUCE_CONSUMPTION: self._handle_reduce_consumption,
+            ScenarioType.EXTEND_DEVICES: self._handle_extend_devices,
+            ScenarioType.REDUCE_STREAMING: self._handle_reduce_streaming,
+        }
+
     def apply_scenario(self, profile: CarbonProfile, scenario: Scenario) -> CarbonProfile:
         """Return a new CarbonProfile with the scenario change applied."""
         data = profile.model_dump()
-
-        stype = scenario.type
-
-        if stype == ScenarioType.SWITCH_DIET:
-            if data.get("diet"):
-                data["diet"]["diet_type"] = scenario.new_diet.value  # type: ignore[attr-defined]
-
-        elif stype == ScenarioType.SWITCH_CAR:
-            if data.get("transport") and data["transport"].get("car"):
-                data["transport"]["car"]["car_type"] = scenario.new_car_type.value  # type: ignore[attr-defined]
-                if scenario.new_car_type == CarType.NONE:  # type: ignore[attr-defined]
-                    data["transport"]["car"] = None
-
-        elif stype == ScenarioType.REDUCE_FLIGHTS:
-            if data.get("transport") and data["transport"].get("flights"):
-                flights = data["transport"]["flights"]
-                reduce_sh = getattr(scenario, "reduce_short_haul_by", 0)
-                reduce_lh = getattr(scenario, "reduce_long_haul_by", 0)
-                flights["short_haul_flights"] = max(0, flights["short_haul_flights"] - reduce_sh)
-                flights["long_haul_flights"] = max(0, flights["long_haul_flights"] - reduce_lh)
-
-        elif stype == ScenarioType.SWITCH_HEATING:
-            if data.get("home"):
-                data["home"]["heating_type"] = scenario.new_heating_type.value  # type: ignore[attr-defined]
-
-        elif stype == ScenarioType.ADD_RENEWABLE:
-            if data.get("home"):
-                switch = getattr(scenario, "switch_to_renewable_tariff", True)
-                has_solar = getattr(scenario, "add_solar_panels", False)
-                data["home"]["renewable_tariff"] = switch
-                data["home"]["has_solar"] = has_solar
-
-        elif stype == ScenarioType.REDUCE_CONSUMPTION:
-            if data.get("consumption"):
-                reduce_clothing = getattr(scenario, "reduce_clothing_by", 0)
-                reduce_elec = getattr(scenario, "reduce_electronics_by", 0)
-                reduce_del = getattr(scenario, "reduce_deliveries_by", 0.0)
-                data["consumption"]["new_clothing_items_per_year"] = max(0, data["consumption"]["new_clothing_items_per_year"] - reduce_clothing)
-                data["consumption"]["new_electronics_per_year"] = max(0, data["consumption"]["new_electronics_per_year"] - reduce_elec)
-                data["consumption"]["online_deliveries_per_week"] = max(0.0, data["consumption"]["online_deliveries_per_week"] - reduce_del)
-
-        elif stype == ScenarioType.EXTEND_DEVICES:
-            if data.get("digital"):
-                data["digital"]["device_upgrade_frequency"] = scenario.new_device_frequency.value  # type: ignore[attr-defined]
-
-        elif stype == ScenarioType.REDUCE_STREAMING:
-            if data.get("digital"):
-                data["digital"]["streaming_gaming_usage"] = scenario.new_streaming_usage.value  # type: ignore[attr-defined]
-
+        handler = self._scenario_handlers.get(scenario.type)
+        if handler:
+            handler(data, scenario)
         return CarbonProfile.model_validate(data)
+
+    def _handle_switch_diet(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, SwitchDietParams) and data.get("diet"):
+            data["diet"]["diet_type"] = scenario.new_diet.value
+
+    def _handle_switch_car(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, SwitchCarParams) and data.get("transport") and data["transport"].get("car"):
+            data["transport"]["car"]["car_type"] = scenario.new_car_type.value
+            if scenario.new_car_type == CarType.NONE:
+                data["transport"]["car"] = None
+
+    def _handle_reduce_flights(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, ReduceFlightsParams) and data.get("transport") and data["transport"].get("flights"):
+            flights = data["transport"]["flights"]
+            flights["short_haul_flights"] = max(0, flights["short_haul_flights"] - scenario.reduce_short_haul_by)
+            flights["long_haul_flights"] = max(0, flights["long_haul_flights"] - scenario.reduce_long_haul_by)
+
+    def _handle_switch_heating(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, SwitchHeatingParams) and data.get("home"):
+            data["home"]["heating_type"] = scenario.new_heating_type.value
+
+    def _handle_add_renewable(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, AddRenewableParams) and data.get("home"):
+            data["home"]["renewable_tariff"] = scenario.switch_to_renewable_tariff
+            data["home"]["has_solar"] = scenario.add_solar_panels
+
+    def _handle_reduce_consumption(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, ReduceConsumptionParams) and data.get("consumption"):
+            data["consumption"]["new_clothing_items_per_year"] = max(0, data["consumption"]["new_clothing_items_per_year"] - scenario.reduce_clothing_by)
+            data["consumption"]["new_electronics_per_year"] = max(0, data["consumption"]["new_electronics_per_year"] - scenario.reduce_electronics_by)
+            data["consumption"]["online_deliveries_per_week"] = max(0.0, data["consumption"]["online_deliveries_per_week"] - scenario.reduce_deliveries_by)
+
+    def _handle_extend_devices(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, ExtendDevicesParams) and data.get("digital"):
+            data["digital"]["device_upgrade_frequency"] = scenario.new_device_frequency.value
+
+    def _handle_reduce_streaming(self, data: dict[str, Any], scenario: Any) -> None:
+        if isinstance(scenario, ReduceStreamingParams) and data.get("digital"):
+            data["digital"]["streaming_gaming_usage"] = scenario.new_streaming_usage.value
 
     def compute_delta(
         self,
@@ -95,10 +111,10 @@ class SimulationEngine:
         if scenario and scenario not in all_scenarios:
             all_scenarios.append(scenario)
 
-        co_benefits = []
+        co_benefits: list[CoBenefit] = []
         total_upfront = 0.0
         total_annual_saving = 0.0
-        applied_scenarios = []
+        applied_scenarios: list[str] = []
 
         for sc in all_scenarios:
             applied_scenarios.append(sc.type.value)
@@ -129,9 +145,8 @@ class SimulationEngine:
         stype = scenario.type
         benefits: list[CoBenefit] = []
 
-        if stype == ScenarioType.SWITCH_DIET:
-            new_diet = getattr(scenario, "new_diet", None)
-            if new_diet in (DietType.VEGAN, DietType.VEGETARIAN):
+        if stype == ScenarioType.SWITCH_DIET and isinstance(scenario, SwitchDietParams):
+            if scenario.new_diet in (DietType.VEGAN, DietType.VEGETARIAN):
                 benefits.append(CoBenefit(
                     type=CoBenefitType.HEALTH,
                     description="Reduced risk of heart disease and type-2 diabetes",
@@ -142,9 +157,8 @@ class SimulationEngine:
                     quantified="~$1,500/year",
                 ))
 
-        elif stype == ScenarioType.SWITCH_CAR:
-            new_car = getattr(scenario, "new_car_type", None)
-            if new_car == CarType.ELECTRIC:
+        elif stype == ScenarioType.SWITCH_CAR and isinstance(scenario, SwitchCarParams):
+            if scenario.new_car_type == CarType.ELECTRIC:
                 benefits.append(CoBenefit(
                     type=CoBenefitType.FINANCIAL,
                     description="Lower fuel and maintenance costs vs petrol",
@@ -155,23 +169,22 @@ class SimulationEngine:
                     description="Zero tailpipe emissions improves local air quality",
                 ))
 
-        elif stype == ScenarioType.REDUCE_FLIGHTS:
+        elif stype == ScenarioType.REDUCE_FLIGHTS and isinstance(scenario, ReduceFlightsParams):
             benefits.append(CoBenefit(
                 type=CoBenefitType.FINANCIAL,
                 description="Significant cost savings on flights",
                 quantified=f"~${abs(int(delta * 300))}/year saved",
             ))
 
-        elif stype == ScenarioType.SWITCH_HEATING:
-            new_heat = getattr(scenario, "new_heating_type", None)
-            if new_heat == HeatingType.HEAT_PUMP:
+        elif stype == ScenarioType.SWITCH_HEATING and isinstance(scenario, SwitchHeatingParams):
+            if scenario.new_heating_type == HeatingType.HEAT_PUMP:
                 benefits.append(CoBenefit(
                     type=CoBenefitType.FINANCIAL,
                     description="Lower running costs than gas in most climates",
                     quantified="~$500–800/year once installed",
                 ))
 
-        elif stype == ScenarioType.EXTEND_DEVICES:
+        elif stype == ScenarioType.EXTEND_DEVICES and isinstance(scenario, ExtendDevicesParams):
             benefits.append(CoBenefit(
                 type=CoBenefitType.FINANCIAL,
                 description="Save thousands by delaying hardware upgrades",
@@ -185,11 +198,11 @@ class SimulationEngine:
         scenario: Scenario, delta: float
     ) -> tuple[float | None, float | None, float | None]:
         stype = scenario.type
-        if stype == ScenarioType.SWITCH_CAR:
+        if stype == ScenarioType.SWITCH_CAR and isinstance(scenario, SwitchCarParams):
             upfront = getattr(scenario, "upfront_cost_usd", None) or 8_000.0
             annual = 1_500.0
             return round(upfront / annual, 1), upfront, annual
-        if stype == ScenarioType.SWITCH_HEATING:
+        if stype == ScenarioType.SWITCH_HEATING and isinstance(scenario, SwitchHeatingParams):
             upfront = getattr(scenario, "upfront_cost_usd", None) or 12_000.0
             annual = 700.0
             return round(upfront / annual, 1), upfront, annual

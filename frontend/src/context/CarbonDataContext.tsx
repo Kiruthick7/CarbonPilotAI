@@ -1,6 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { carbonApi } from "@/services/api";
+
+import { CarbonProfile, CarbonInventory } from "@/types/carbon";
 
 export interface RankedAction {
   id: string;
@@ -22,20 +25,8 @@ export interface OcrData {
   total_cost_usd?: number | null;
   confidence?: number;
   calculated_footprint_tco2e?: number;
-  inventory: {
-    total_tco2e: number;
-    trace?: {
-      formula: string;
-      variables: Record<string, string>;
-      source: string;
-    };
-    breakdowns: Array<{
-      category: string;
-      total_kgco2e: number;
-    }>;
-    [key: string]: unknown;
-  };
-  profile: Record<string, unknown>;
+  inventory: CarbonInventory;
+  profile: CarbonProfile;
   individual_results?: (OcrData & { filename: string })[];
   [key: string]: unknown;
 }
@@ -102,23 +93,13 @@ export function CarbonDataProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/v1";
-        const response = await fetch(`${apiUrl}/actions/rank`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            inventory: currentData.inventory,
-            profile: currentData.profile,
-            constraints: {}
-          })
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          setActions(result.actions || []);
-        } else {
-          setActions([]);
-        }
+        const result = await carbonApi.fetchRankedActions(
+          currentData.inventory,
+          currentData.profile,
+          {}
+        );
+        
+        setActions(result.actions || []);
       } catch (err) {
         console.error("Failed to fetch actions:", err);
         setActions([]);

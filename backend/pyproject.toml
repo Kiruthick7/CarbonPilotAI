@@ -62,8 +62,6 @@ select = [
     "RUF", # Ruff-specific rules
 ]
 ignore = [
-    "ANN101", # self type annotation not required
-    "ANN102",
     "B008",   # Do not perform function calls in argument defaults (Field, Depends)
     "E501",   # Line too long
     "UP042",
@@ -97,7 +95,7 @@ python_version = "3.11"
 strict = true
 ignore_missing_imports = true
 plugins = ["pydantic.mypy"]
-exclude = ["tests/"]
+exclude = ["tests/", "venv/", ".venv/"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

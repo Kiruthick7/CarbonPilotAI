@@ -1,10 +1,13 @@
+from __future__ import annotations
+
+from typing import Any
+
 """
 api/v1/calculate.py
 POST /v1/calculate — deterministic carbon footprint calculation.
 No AI involved. Always fast. The source of truth for all numbers.
 """
 
-from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
@@ -26,7 +29,7 @@ router = APIRouter()
 async def calculate_footprint(
     profile: CarbonProfile,
     calculator: CalculatorService = Depends(get_calculator),
-) -> dict:
+) -> dict[str, Any]:
     """
     Deterministic carbon footprint calculation.
     Uses IPCC AR6 / IEA 2023 / DEFRA 2023 emission factors.
@@ -45,7 +48,7 @@ async def calculate_footprint(
         raise HTTPException(
             status_code=422,
             detail=ErrorResponse(
-                code=ErrorCode.INVALID_PROFILE,
+                code=ErrorCode.VAL_INVALID_PROFILE,
                 message=str(e),
             ).model_dump(),
         )
@@ -54,7 +57,7 @@ async def calculate_footprint(
         raise HTTPException(
             status_code=500,
             detail=ErrorResponse(
-                code=ErrorCode.CALCULATION_ERROR,
+                code=ErrorCode.SYS_INTERNAL_ERROR,
                 message="Calculation failed. Please try again.",
             ).model_dump(),
         )

@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+from typing import Any
+
 """
 calculator_service.py — aligned to existing carbon model field names.
 """
 
-from __future__ import annotations
 
 import structlog
 
@@ -37,7 +40,7 @@ class CalculatorService:
     def engine(self) -> CarbonEngine:
         return self._engine
 
-    async def calculate(self, profile: CarbonProfile) -> dict:
+    async def calculate(self, profile: CarbonProfile) -> dict[str, Any]:
         """Compute inventory and return as dict with metadata."""
         logger.info(
             "calculating_footprint",

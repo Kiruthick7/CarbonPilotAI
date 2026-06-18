@@ -1,3 +1,5 @@
+from typing import Any
+
 """
 api/health.py
 Lightweight health check endpoint for Cloud Run liveness probes.
@@ -11,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/health", tags=["ops"])
-async def health_check() -> dict:
+async def health_check() -> dict[str, Any]:
     """
     Returns service health. Used by Cloud Run readiness probes.
     Does NOT check AI connectivity — keeps probe fast and cheap.

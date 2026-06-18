@@ -6,6 +6,7 @@ Generates a personalised, ranked list of up to 5 climate actions.
 from __future__ import annotations
 
 import asyncio
+from typing import Any
 
 import structlog
 
@@ -60,7 +61,7 @@ class RankerService:
         total_kg = request.inventory.total_tco2e * 1000
 
         for template, sim_result in zip(candidates, simulations, strict=False):
-            if isinstance(sim_result, Exception):
+            if isinstance(sim_result, BaseException):
                 logger.warning("action_simulation_failed", action_id=template.id, error=str(sim_result))
                 continue
 
@@ -74,7 +75,7 @@ class RankerService:
             )
             ranked_actions.append(ranked_action)
 
-        def _sort_actions():
+        def _sort_actions() -> list[Any]:
             ranked_actions.sort(
                 key=lambda a: (a.is_feasible, a.composite_score),
                 reverse=True,

@@ -15,16 +15,18 @@ from app.models.carbon import (
     CalculationTrace,
     CarbonInventory,
     CarbonProfile,
-    CarType,
     CategoryBreakdown,
     SubcategoryItem,
 )
 
 logger = structlog.get_logger(__name__)
 
-GLOBAL_GRID_FALLBACK = 0.386
-GLOBAL_15C_BUDGET = 2.3
-RADIATIVE_FORCING = 1.9
+from app.engines.calculators.constants import GLOBAL_15C_BUDGET, GLOBAL_GRID_FALLBACK
+from app.engines.calculators.consumption_calculator import ConsumptionCalculator
+from app.engines.calculators.diet_calculator import DietCalculator
+from app.engines.calculators.digital_calculator import DigitalCalculator
+from app.engines.calculators.home_calculator import HomeCalculator
+from app.engines.calculators.transport_calculator import TransportCalculator
 
 
 @dataclass(frozen=True)
@@ -54,11 +56,11 @@ class CarbonEngine:
         return self._f.version
 
     def compute(self, profile: CarbonProfile) -> CarbonInventory:
-        transport_kg = self._compute_transport_kg(profile)
-        diet_kg = self._compute_diet_kg(profile)
-        home_kg = self._compute_home_kg(profile)
-        consumption_kg = self._compute_consumption_kg(profile)
-        digital_kg = self._compute_digital_kg(profile)
+        transport_kg = TransportCalculator.compute(profile, self._f.transport, self._f.grid_intensity)
+        diet_kg = DietCalculator.compute(profile, self._f.diet, self._f.food_waste_multipliers)
+        home_kg = HomeCalculator.compute(profile, self._f.home, self._f.grid_intensity)
+        consumption_kg = ConsumptionCalculator.compute(profile, self._f.consumption)
+        digital_kg = DigitalCalculator.compute(profile)
 
         transport_total = transport_kg["total"]
         diet_total = diet_kg["total"]
@@ -151,99 +153,7 @@ class CarbonEngine:
         percentile = 100 * (1 / (1 + math.exp(-2.0 * (ratio - 1.0))))
         return round(min(max(percentile, 1.0), 99.0), 1)
 
-    def _compute_transport_kg(self, profile: CarbonProfile) -> dict[str, float]:
-        if not profile.transport:
-            return {"total": 0.0, "car": 0.0, "short_haul": 0.0, "long_haul": 0.0, "public": 0.0}
-        f = self._f.transport
-        grid = self._f.grid_intensity.get(profile.country_code, GLOBAL_GRID_FALLBACK)
-        t = profile.transport
 
-        car_kg = 0.0
-        if t.car:
-            if t.car.car_type == CarType.ELECTRIC:
-                wh_per_km = f["car"]["electric"]["wh_per_km"]
-                car_kg = t.car.weekly_km * 52 * (wh_per_km / 1000) * grid
-            elif t.car.car_type != CarType.NONE:
-                car_kg = t.car.weekly_km * 52 * f["car"][t.car.car_type.value]["kgCO2e_per_km"]
-
-        short_haul_kg = t.flights.short_haul_flights * f["flights"]["short_haul_kg"] * RADIATIVE_FORCING
-        long_haul_kg = t.flights.long_haul_flights * f["flights"]["long_haul_kg"] * RADIATIVE_FORCING
-
-        bus_km = t.weekly_public_transport_km * 52 * t.public_transport_split_bus
-        train_km = t.weekly_public_transport_km * 52 * (1 - t.public_transport_split_bus)
-        public_kg = bus_km * f["bus"]["kgCO2e_per_km"] + train_km * f["train"]["kgCO2e_per_km"]
-
-        total = car_kg + short_haul_kg + long_haul_kg + public_kg
-        return {"total": total, "car": car_kg, "short_haul": short_haul_kg, "long_haul": long_haul_kg, "public": public_kg}
-
-    def _compute_diet_kg(self, profile: CarbonProfile) -> dict[str, float]:
-        if not profile.diet:
-            return {"total": 0.0, "base": 0.0, "waste": 0.0}
-        f = self._f.diet
-        d = profile.diet
-        base_per_day = f[d.diet_type.value]["kgCO2e_per_day"]
-        waste_mult = self._f.food_waste_multipliers.get(d.food_waste.value, 1.0)
-        base_kg = base_per_day * 365
-        total_kg = base_kg * waste_mult
-        waste_kg = total_kg - base_kg
-        return {"total": total_kg, "base": base_kg, "waste": waste_kg}
-
-    def _compute_home_kg(self, profile: CarbonProfile) -> dict[str, float]:
-        fh = self._f.home
-        h = profile.home
-        grid = self._f.grid_intensity.get(profile.country_code, GLOBAL_GRID_FALLBACK)
-
-        kwh = fh["heating_kwh_per_year"][h.home_size.value]
-        heat_factor = fh["heating"][h.heating_type.value]
-
-        if heat_factor.get("kgCO2e_per_kwh") == "grid":
-            heating_kg = kwh * grid
-        elif h.heating_type.value == "heat_pump":
-            heating_kg = (kwh / heat_factor.get("cop", 3.0)) * grid
-        else:
-            heating_kg = kwh * heat_factor["kgCO2e_per_kwh"]
-
-        elec_kwh = fh["electricity_kwh_defaults"][h.home_size.value]
-        elec_mult = fh["renewable_electricity_multiplier"] if (h.renewable_tariff or h.has_solar) else 1.0
-        electricity_kg = elec_kwh * grid * elec_mult
-
-        per_person_heating = heating_kg / max(h.num_occupants, 1)
-        per_person_elec = electricity_kg / max(h.num_occupants, 1)
-        total = per_person_heating + per_person_elec
-
-        return {"total": total, "heating": per_person_heating, "electricity": per_person_elec}
-
-    def _compute_consumption_kg(self, profile: CarbonProfile) -> dict[str, float]:
-        if not profile.consumption:
-            return {"total": 0.0, "clothing": 0.0, "electronics": 0.0, "deliveries": 0.0}
-        fc = self._f.consumption
-        c = profile.consumption
-        clothing = c.new_clothing_items_per_year * fc["clothing_per_item_kg"]
-        electronics = c.new_electronics_per_year * fc["electronics_per_device_kg"]
-        deliveries = c.online_deliveries_per_week * 52 * fc["delivery_per_order_kg"]
-        return {"total": clothing + electronics + deliveries, "clothing": clothing, "electronics": electronics, "deliveries": deliveries}
-
-    def _compute_digital_kg(self, profile: CarbonProfile) -> dict[str, float]:
-        if not profile.digital:
-            return {"total": 0.0, "hardware": 0.0, "operational": 0.0}
-        d = profile.digital
-
-        # Hardware Embodied Carbon (Phone ~70kg, Laptop ~300kg)
-        hw_emissions = {"frequent": 1.5, "average": 3.5, "rare": 5.0} # Lifespan in years
-        lifespan = hw_emissions.get(d.device_upgrade_frequency.value, 3.5)
-        hardware = (70.0 / lifespan) + (300.0 / lifespan)
-
-        # Operational: Streaming & Gaming (0.05kg CO2e per hr)
-        # Light: 0.5hr/day, Moderate: 3hr/day, Heavy: 6hr/day
-        stream_hours = {"light": 0.5, "moderate": 3.0, "heavy": 6.0}
-        streaming_kg = stream_hours.get(d.streaming_gaming_usage.value, 3.0) * 365 * 0.05
-
-        # Operational: AI & Cloud Usage (LLM query ~0.005g, Image ~2g) -> Avg 0.01kg per heavy day
-        ai_days = {"rare": 0.001, "occasional": 0.005, "heavy": 0.02}
-        ai_kg = ai_days.get(d.ai_cloud_usage.value, 0.005) * 365
-
-        operational = streaming_kg + ai_kg
-        return {"total": hardware + operational, "hardware": hardware, "operational": operational}
 
     def get_factors_used(self, profile: CarbonProfile) -> list[dict[str, str]]:
         grid = self._f.grid_intensity.get(profile.country_code, GLOBAL_GRID_FALLBACK)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CarbonProfile, CarbonInventory } from "@/types/carbon";
 
 interface ExecutionStep {
   step_number: number;
@@ -25,8 +26,8 @@ interface ExecutionPlan {
 
 interface ExecutionPlanCardProps {
   actionId: string;
-  inventory: Record<string, unknown>;
-  profile: Record<string, unknown>;
+  inventory: CarbonInventory;
+  profile: CarbonProfile;
 }
 
 export default function ExecutionPlanCard({ actionId, inventory, profile }: ExecutionPlanCardProps) {
