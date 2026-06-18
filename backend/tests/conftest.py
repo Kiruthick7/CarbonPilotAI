@@ -1,4 +1,5 @@
 import os
+
 os.environ["GROQ_API_KEY"] = "mock_test_key"
 
 from unittest.mock import Mock
