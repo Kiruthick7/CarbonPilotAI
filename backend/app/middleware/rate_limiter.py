@@ -39,7 +39,9 @@ class SlidingWindowRateLimiter(BaseHTTPMiddleware):
         super().__init__(app)
         self._windows: dict[str, list[float]] = defaultdict(list)
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         path = request.url.path
         limit_cfg = self._match_limit(path)
         if limit_cfg is None:
@@ -49,18 +51,22 @@ class SlidingWindowRateLimiter(BaseHTTPMiddleware):
         ip_hash = self._hash_ip(request.client.host if request.client else "unknown")
         key = f"ratelimit:{ip_hash}:{path}"
 
-
-
         now_mono = time.monotonic()
         self._windows[key] = [t for t in self._windows[key] if now_mono - t < window]
 
         if len(self._windows[key]) >= max_req:
             oldest = self._windows[key][0]
             retry_after = max(1, int(window - (now_mono - oldest)) + 1)
-            logger.warning("rate_limit_hit_memory", ip_hash=ip_hash, path=path, retry_after=retry_after)
+            logger.warning(
+                "rate_limit_hit_memory", ip_hash=ip_hash, path=path, retry_after=retry_after
+            )
             return JSONResponse(
                 status_code=429,
-                content={"code": "RATE_LIMITED", "retry_after": retry_after, "message": "Too many requests"},
+                content={
+                    "code": "RATE_LIMITED",
+                    "retry_after": retry_after,
+                    "message": "Too many requests",
+                },
                 headers={"Retry-After": str(retry_after)},
             )
 

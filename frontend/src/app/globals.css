@@ -26,9 +26,15 @@ body {
 }
 
 @keyframes scan {
-  0% { top: 0%; }
-  50% { top: 100%; }
-  100% { top: 0%; }
+  0% {
+    top: 0%;
+  }
+  50% {
+    top: 100%;
+  }
+  100% {
+    top: 0%;
+  }
 }
 
 @media print {
@@ -42,36 +48,42 @@ body {
     color: black;
     padding: 1.5cm; /* Adds padding back for readability */
   }
-  
+
   /* Hide sidebar and navigation */
-  aside, nav, .sidebar {
+  aside,
+  nav,
+  .sidebar {
     display: none !important;
   }
-  
+
   /* Expand main content */
-  main, .main-content {
+  main,
+  .main-content {
     margin-left: 0 !important;
     padding: 0 !important;
     width: 100% !important;
     max-width: none !important;
   }
-  
+
   /* Hide specific utility classes */
   .print\:hidden {
     display: none !important;
   }
-  
+
   /* Ensure page breaks don't cut cards in half */
-  .bg-white, .card, .action-card {
+  .bg-white,
+  .card,
+  .action-card {
     break-inside: avoid;
     page-break-inside: avoid;
     border: 1px solid #e5e7eb !important;
     box-shadow: none !important;
     margin-bottom: 20px !important;
   }
-  
+
   /* Remove backgrounds for ink saving */
-  .bg-slate-50, .bg-gray-50 {
+  .bg-slate-50,
+  .bg-gray-50 {
     background: transparent !important;
     border: 1px solid #e5e7eb !important;
   }

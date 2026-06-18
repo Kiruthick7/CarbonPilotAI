@@ -25,6 +25,7 @@ logger = structlog.get_logger(__name__)
 def configure_logging(level: str = "INFO") -> None:
     """Set up structured JSON logging via structlog."""
     import logging
+
     logging.basicConfig(level=getattr(logging, level.upper(), logging.INFO))
     structlog.configure(
         processors=[
@@ -34,7 +35,8 @@ def configure_logging(level: str = "INFO") -> None:
             structlog.stdlib.add_logger_name,
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
-            structlog.dev.ConsoleRenderer() if level == "DEBUG"
+            structlog.dev.ConsoleRenderer()
+            if level == "DEBUG"
             else structlog.processors.JSONRenderer(),
         ],
         wrapper_class=structlog.stdlib.BoundLogger,
@@ -54,6 +56,7 @@ def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app_instance: FastAPI) -> AsyncGenerator[None, None]:
         from app.dependencies import get_loader
+
         get_loader()
         logger.info("carbonpilot_started", version=settings.app_version, env=settings.environment)
         yield
@@ -67,16 +70,16 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-
     @app.middleware("http")
-    async def security_headers(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    async def security_headers(
+        request: Request, call_next: Callable[[Request], Awaitable[Response]]
+    ) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
         return response
-
 
     app.add_middleware(CorrelationIDMiddleware)
     app.add_middleware(SlidingWindowRateLimiter)
@@ -87,7 +90,6 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
 
     app.include_router(health_router)
     app.include_router(v1_router)

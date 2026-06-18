@@ -62,7 +62,9 @@ class RankerService:
 
         for template, sim_result in zip(candidates, simulations, strict=False):
             if isinstance(sim_result, BaseException):
-                logger.warning("action_simulation_failed", action_id=template.id, error=str(sim_result))
+                logger.warning(
+                    "action_simulation_failed", action_id=template.id, error=str(sim_result)
+                )
                 continue
 
             co2e_saved_t = abs(sim_result.delta_co2e)

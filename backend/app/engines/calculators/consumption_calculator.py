@@ -11,4 +11,9 @@ class ConsumptionCalculator:
         clothing = c.new_clothing_items_per_year * fc["clothing_per_item_kg"]
         electronics = c.new_electronics_per_year * fc["electronics_per_device_kg"]
         deliveries = c.online_deliveries_per_week * 52 * fc["delivery_per_order_kg"]
-        return {"total": clothing + electronics + deliveries, "clothing": clothing, "electronics": electronics, "deliveries": deliveries}
+        return {
+            "total": clothing + electronics + deliveries,
+            "clothing": clothing,
+            "electronics": electronics,
+            "deliveries": deliveries,
+        }

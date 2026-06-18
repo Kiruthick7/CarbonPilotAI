@@ -12,7 +12,10 @@ from enum import Enum
 
 class StrEnum(str, Enum):
     """Python 3.9-compatible StrEnum substitute."""
+
     pass
+
+
 from typing import Annotated
 
 from pydantic import BaseModel, Field
@@ -88,11 +91,6 @@ class AIUsage(StrEnum):
     HEAVY = "heavy"
 
 
-
-
-
-
-
 class CarProfile(BaseModel):
     """Driving behaviour for a single car.
 
@@ -161,9 +159,7 @@ class HomeProfile(BaseModel):
     num_occupants: Annotated[int, Field(ge=1, le=20)] = Field(
         default=2, description="Number of people sharing the home's energy bills."
     )
-    has_solar: bool = Field(
-        default=False, description="Whether the home has rooftop solar panels."
-    )
+    has_solar: bool = Field(default=False, description="Whether the home has rooftop solar panels.")
     renewable_tariff: bool = Field(
         default=False,
         description="Whether the household is on a 100 % renewable electricity tariff.",
@@ -198,11 +194,6 @@ class DigitalProfile(BaseModel):
     )
 
 
-
-
-
-
-
 class CarbonProfile(BaseModel):
     """Complete user carbon profile.
 
@@ -230,11 +221,6 @@ class CarbonProfile(BaseModel):
     )
 
 
-
-
-
-
-
 class CarbonProfilePartial(BaseModel):
     """Partially-known carbon profile built up during chat onboarding.
 
@@ -247,11 +233,6 @@ class CarbonProfilePartial(BaseModel):
     home: HomeProfile | None = Field(default=None)
     consumption: ConsumptionProfile | None = Field(default=None)
     digital: DigitalProfile | None = Field(default=None)
-
-
-
-
-
 
 
 class SubcategoryItem(BaseModel):

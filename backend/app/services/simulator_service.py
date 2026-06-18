@@ -54,7 +54,11 @@ class SimulatorService:
             scenarios=request.scenarios,
         )
 
-        logger.info("simulation_complete", delta_co2e=response.delta_co2e, delta_percent=response.delta_percent)
+        logger.info(
+            "simulation_complete",
+            delta_co2e=response.delta_co2e,
+            delta_percent=response.delta_percent,
+        )
         return response
 
     async def simulate_for_template(
@@ -66,9 +70,14 @@ class SimulatorService:
     ) -> SimulateResponse:
         """Convenience method for the ranker — builds a SimulateRequest from parts."""
         from pydantic import TypeAdapter
-        scenario: Scenario = TypeAdapter(Scenario).validate_python({"type": scenario_type, **scenario_params})
-        return await self.simulate(SimulateRequest(
-            inventory=inventory,
-            profile=profile,
-            scenario=scenario,
-        ))
+
+        scenario: Scenario = TypeAdapter(Scenario).validate_python(
+            {"type": scenario_type, **scenario_params}
+        )
+        return await self.simulate(
+            SimulateRequest(
+                inventory=inventory,
+                profile=profile,
+                scenario=scenario,
+            )
+        )

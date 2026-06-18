@@ -1,8 +1,8 @@
 export interface CarbonProfile {
   country_code?: string;
   transport?: {
-    car?: { car_type: string; weekly_km: number; };
-    flights?: { short_haul_flights: number; long_haul_flights: number; };
+    car?: { car_type: string; weekly_km: number };
+    flights?: { short_haul_flights: number; long_haul_flights: number };
     weekly_public_transport_km?: number;
     public_transport_split_bus?: number;
   };
@@ -33,6 +33,7 @@ export interface CarbonProfile {
 export interface SubcategoryItem {
   label: string;
   kgco2e: number;
+  share_of_category?: number;
 }
 
 export interface CategoryBreakdown {

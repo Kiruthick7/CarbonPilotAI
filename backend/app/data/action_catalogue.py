@@ -36,11 +36,13 @@ class ActionTemplate:
         self.is_relevant: Callable[[CarbonInventory], bool] = is_relevant or (lambda _: True)
         self.is_allowed: Callable[[UserConstraints], bool] = is_allowed or (lambda _: True)
 
+
 def _diet_transport_kg(inv: CarbonInventory, category: str) -> float:
     for bd in inv.breakdowns:
         if bd.category == category:
             return bd.total_kgco2e
     return 0.0
+
 
 def _sub_kg(inv: CarbonInventory, category: str, label: str) -> float:
     for bd in inv.breakdowns:
@@ -49,6 +51,7 @@ def _sub_kg(inv: CarbonInventory, category: str, label: str) -> float:
                 if sub.label == label:
                     return sub.kgco2e
     return 0.0
+
 
 ACTION_CATALOGUE: list[ActionTemplate] = [
     ActionTemplate(

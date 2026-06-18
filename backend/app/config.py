@@ -28,16 +28,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-
-
-
     groq_api_key: str = Field(
         ...,
         description="Groq API key — obtain from https://console.groq.com/keys",
     )
-
-
-
 
     environment: Literal["development", "production"] = Field(
         default="development",
@@ -52,23 +46,10 @@ class Settings(BaseSettings):
         description="Semantic version surfaced in /health and OpenAPI docs.",
     )
 
-
-
-
     cors_origins: str = Field(
         default="http://localhost:3000",
         description="Comma-separated list of allowed frontend origins.",
     )
-
-    # Removed database_url as application is stateless.
-
-
-
-
-    # Removed rate_limit_chat, rate_limit_window_seconds, and redis_url as they are unused or unneeded.
-
-
-
 
     @field_validator("cors_origins")
     @classmethod
@@ -87,8 +68,6 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Return ``True`` when running in a production environment."""
         return self.environment == "production"
-
-
 
 
 @lru_cache(maxsize=1)

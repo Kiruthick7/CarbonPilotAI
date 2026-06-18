@@ -23,7 +23,7 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                     "options": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Array of short quick reply options."
+                        "description": "Array of short quick reply options.",
                     }
                 },
                 "required": ["options"],
@@ -47,7 +47,10 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                         "type": "object",
                         "description": "The user's CarbonProfile assembled from the conversation so far.",
                         "properties": {
-                            "country_code": {"type": "string", "description": "ISO 3166-1 alpha-2 code, e.g. GB, US, IN"},
+                            "country_code": {
+                                "type": "string",
+                                "description": "ISO 3166-1 alpha-2 code, e.g. GB, US, IN",
+                            },
                             "transport": {"type": "object"},
                             "diet": {"type": "object"},
                             "home": {"type": "object"},
@@ -142,7 +145,13 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
                 "properties": {
                     "constraint_type": {
                         "type": "string",
-                        "enum": ["rents_home", "rural_location", "no_budget", "work_travel", "medical_diet"],
+                        "enum": [
+                            "rents_home",
+                            "rural_location",
+                            "no_budget",
+                            "work_travel",
+                            "medical_diet",
+                        ],
                     },
                     "free_text": {
                         "type": "string",

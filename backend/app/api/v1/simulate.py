@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter
 
 from app.dependencies import get_agent, get_simulator
 from app.models.carbon import CarbonInventory, CarbonProfile
@@ -19,8 +19,11 @@ from app.services.simulator_service import SimulatorService
 logger = structlog.get_logger(__name__)
 router = APIRouter()
 
+
 class SimulateAIRequest(BaseModel):
-    query: str
+    query: str = Field(
+        ..., max_length=500, description="Natural language query with max 500 characters"
+    )
     inventory: CarbonInventory
     profile: CarbonProfile
 
@@ -59,6 +62,7 @@ async def simulate_scenario(
             ).model_dump(),
         )
 
+
 @router.post(
     "/simulate/ai",
     response_model=SimulateResponse,
@@ -75,15 +79,15 @@ async def simulate_ai_scenario(
     try:
         scenario_dicts = await agent.parse_simulate_query(request.query)
         if not scenario_dicts:
-            raise ValueError("Could not understand any actionable scenarios from your query. Try being more specific, e.g., 'Switch to an EV'.")
+            raise ValueError(
+                "Could not understand any actionable scenarios from your query. Try being more specific, e.g., 'Switch to an EV'."
+            )
 
         ta: TypeAdapter[Scenario] = TypeAdapter(Scenario)
         scenarios = [ta.validate_python(sd) for sd in scenario_dicts]
 
         sim_request = SimulateRequest(
-            inventory=request.inventory,
-            profile=request.profile,
-            scenarios=scenarios
+            inventory=request.inventory, profile=request.profile, scenarios=scenarios
         )
         return await simulator.simulate(sim_request)
     except ValueError as e:

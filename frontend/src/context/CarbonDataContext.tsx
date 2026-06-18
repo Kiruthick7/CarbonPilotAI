@@ -1,9 +1,10 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { carbonApi } from "@/services/api";
-
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import { CarbonProfile, CarbonInventory } from "@/types/carbon";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useRankedActions } from "@/hooks/useRankedActions";
+import { OcrDataSchema } from "@/types/schemas";
 
 export interface RankedAction {
   id: string;
@@ -28,7 +29,6 @@ export interface OcrData {
   inventory: CarbonInventory;
   profile: CarbonProfile;
   individual_results?: (OcrData & { filename: string })[];
-  [key: string]: unknown;
 }
 
 interface CarbonContextType {
@@ -44,78 +44,38 @@ interface CarbonContextType {
 const CarbonContext = createContext<CarbonContextType | undefined>(undefined);
 
 export function CarbonDataProvider({ children }: { children: ReactNode }) {
-  const [ocrData, setOcrDataState] = useState<OcrData | null>(null);
-  const [actions, setActions] = useState<RankedAction[]>([]);
-  const [loadingActions, setLoadingActions] = useState(false);
-  const [actionsView, setActionsView] = useState<"combined" | number>("combined");
-  const [isHydrated, setIsHydrated] = useState(false);
+  const {
+    storedValue: ocrData,
+    setValue: setOcrData,
+    isHydrated,
+  } = useLocalStorage<OcrData>("carbonpilot_ocr_data", null, (val) => {
+    const result = OcrDataSchema.safeParse(val);
+    if (result.success) return result.data as OcrData;
+    console.warn("Invalid OCR data found in localStorage:", result.error);
+    return null;
+  });
+  const [actionsView, setActionsView] = useState<"combined" | number>(
+    "combined",
+  );
 
-  // Load from local storage on mount
-  useEffect(() => {
-    const dataStr = localStorage.getItem("carbonpilot_ocr_data");
-    if (dataStr) {
-      try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setOcrDataState(JSON.parse(dataStr));
-      } catch (e) {
-        console.error("Failed to parse OCR data", e);
-      }
-    }
-    setIsHydrated(true);
-  }, []);
-
-  const setOcrData = (data: OcrData | null) => {
-    setOcrDataState(data);
-    if (data) {
-      localStorage.setItem("carbonpilot_ocr_data", JSON.stringify(data));
-    } else {
-      localStorage.removeItem("carbonpilot_ocr_data");
-    }
-  };
-
-  // Fetch actions whenever ocrData or actionsView changes
-  useEffect(() => {
-    async function fetchActions() {
-      if (!ocrData || !ocrData.inventory || !ocrData.profile) {
-        setActions([]);
-        return;
-      }
-      
-      setLoadingActions(true);
-      try {
-        const currentData = actionsView === "combined" 
-          ? ocrData
-          : (ocrData.individual_results?.[actionsView as number] || ocrData);
-
-        if (!currentData.inventory || !currentData.profile) {
-          setActions([]);
-          setLoadingActions(false);
-          return;
-        }
-
-        const result = await carbonApi.fetchRankedActions(
-          currentData.inventory,
-          currentData.profile,
-          {}
-        );
-        
-        setActions(result.actions || []);
-      } catch (err) {
-        console.error("Failed to fetch actions:", err);
-        setActions([]);
-      } finally {
-        setLoadingActions(false);
-      }
-    }
-
-    // Debounce or just wait for hydration
-    if (isHydrated) {
-      fetchActions();
-    }
-  }, [ocrData, actionsView, isHydrated]);
+  const { actions, loadingActions } = useRankedActions(
+    ocrData,
+    actionsView,
+    isHydrated,
+  );
 
   return (
-    <CarbonContext.Provider value={{ ocrData, setOcrData, actions, loadingActions, actionsView, setActionsView, isHydrated }}>
+    <CarbonContext.Provider
+      value={{
+        ocrData,
+        setOcrData,
+        actions,
+        loadingActions,
+        actionsView,
+        setActionsView,
+        isHydrated,
+      }}
+    >
       {children}
     </CarbonContext.Provider>
   );

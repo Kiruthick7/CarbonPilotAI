@@ -5,7 +5,11 @@ from app.models.carbon import CarbonProfile
 
 class DietCalculator:
     @staticmethod
-    def compute(profile: CarbonProfile, emission_factors: dict[str, Any], food_waste_multipliers: dict[str, float]) -> dict[str, float]:
+    def compute(
+        profile: CarbonProfile,
+        emission_factors: dict[str, Any],
+        food_waste_multipliers: dict[str, float],
+    ) -> dict[str, float]:
         if not profile.diet:
             return {"total": 0.0, "base": 0.0, "waste": 0.0}
         f = emission_factors

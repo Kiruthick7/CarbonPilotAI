@@ -12,8 +12,10 @@ from app.services.ocr_service import process_document
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/ocr", tags=["ocr"])
 
+
 class ManualEntryRequest(BaseModel):
     kwh_usage: float
+
 
 class IndividualResult(BaseModel):
     filename: str
@@ -23,6 +25,7 @@ class IndividualResult(BaseModel):
     calculated_footprint_tco2e: float
     profile: dict[str, Any]
     inventory: dict[str, Any]
+
 
 class OcrResponse(BaseModel):
     success: bool
@@ -38,8 +41,7 @@ class OcrResponse(BaseModel):
 
 @router.post("/upload", response_model=OcrResponse)
 async def upload_utility_bill(
-    files: list[UploadFile] = File(...),
-    calculator: CalculatorService = Depends(get_calculator)
+    files: list[UploadFile] = File(...), calculator: CalculatorService = Depends(get_calculator)
 ) -> OcrResponse:
     """
     Process an uploaded utility bill image or PDF.
@@ -63,15 +65,35 @@ async def upload_utility_bill(
 
             file_bytes = await file.read()
             if len(file_bytes) > 5 * 1024 * 1024:
-                raise HTTPException(status_code=413, detail=f"File exceeds 5MB limit: {file.filename}")
+                raise HTTPException(
+                    status_code=413, detail=f"File exceeds 5MB limit: {file.filename}"
+                )
 
+            header = file_bytes[:8]
+            is_valid_magic = False
+            if file.content_type == "application/pdf" and header.startswith(b"%PDF-"):
+                is_valid_magic = True
+            elif file.content_type in ("image/jpeg", "image/jpg") and header.startswith(
+                b"\xff\xd8\xff"
+            ):
+                is_valid_magic = True
+            elif file.content_type == "image/png" and header.startswith(b"\x89PNG\r\n\x1a\n"):
+                is_valid_magic = True
+
+            if not is_valid_magic:
+                raise HTTPException(
+                    status_code=415,
+                    detail=f"File signature mismatch for {file.filename}. Possible MIME spoofing.",
+                )
 
             ocr_result = process_document(file_bytes, file.filename or "unknown")
             if "error" in ocr_result:
                 raise HTTPException(status_code=400, detail=str(ocr_result["error"]))
 
             if float(ocr_result.get("confidence", 1.0)) < 0.3:
-                raise HTTPException(status_code=422, detail="OCR confidence too low. Please use manual entry.")
+                raise HTTPException(
+                    status_code=422, detail="OCR confidence too low. Please use manual entry."
+                )
 
             processed_filenames.append(file.filename or "unknown")
             file_kwh = float(ocr_result.get("kwh_usage") or 0.0)
@@ -94,15 +116,17 @@ async def upload_utility_bill(
             ind_profile, ind_inventory, ind_calc_footprint = await build_inventory_for_data(
                 calculator, file_kwh, aggregated_parsed
             )
-            individual_results.append(IndividualResult(
-                filename=file.filename or "unknown",
-                kwh_usage=file_kwh,
-                total_cost_usd=file_cost if file_cost > 0 else None,
-                confidence=file_conf,
-                calculated_footprint_tco2e=ind_calc_footprint,
-                profile=ind_profile.model_dump(),
-                inventory=ind_inventory.model_dump()
-            ))
+            individual_results.append(
+                IndividualResult(
+                    filename=file.filename or "unknown",
+                    kwh_usage=file_kwh,
+                    total_cost_usd=file_cost if file_cost > 0 else None,
+                    confidence=file_conf,
+                    calculated_footprint_tco2e=ind_calc_footprint,
+                    profile=ind_profile.model_dump(),
+                    inventory=ind_inventory.model_dump(),
+                )
+            )
 
         avg_confidence = total_confidence / len(files) if files else 0.0
         combined_filename = ", ".join(processed_filenames)
@@ -120,10 +144,13 @@ async def upload_utility_bill(
             calculated_footprint_tco2e=footprint_tco2e,
             profile=combined_profile.model_dump(),
             inventory=combined_inventory.model_dump(),
-            individual_results=individual_results
+            individual_results=individual_results,
         )
 
-        logger.info("ocr_upload_completed", result={"success": True, "file_count": len(files), "total_kwh": total_kwh})
+        logger.info(
+            "ocr_upload_completed",
+            result={"success": True, "file_count": len(files), "total_kwh": total_kwh},
+        )
         return response_data
 
     except HTTPException:
@@ -132,10 +159,10 @@ async def upload_utility_bill(
         logger.exception("ocr_upload_failed", error=str(e))
         raise
 
+
 @router.post("/manual", response_model=OcrResponse)
 async def manual_utility_entry(
-    request: ManualEntryRequest,
-    calculator: CalculatorService = Depends(get_calculator)
+    request: ManualEntryRequest, calculator: CalculatorService = Depends(get_calculator)
 ) -> OcrResponse:
     """
     Process manual utility data.
@@ -150,15 +177,17 @@ async def manual_utility_entry(
             calculator, total_kwh, {}
         )
 
-        individual_results = [IndividualResult(
-            filename="Manual Entry",
-            kwh_usage=total_kwh,
-            total_cost_usd=None,
-            confidence=1.0,
-            calculated_footprint_tco2e=ind_calc_footprint,
-            profile=ind_profile.model_dump(),
-            inventory=ind_inventory.model_dump()
-        )]
+        individual_results = [
+            IndividualResult(
+                filename="Manual Entry",
+                kwh_usage=total_kwh,
+                total_cost_usd=None,
+                confidence=1.0,
+                calculated_footprint_tco2e=ind_calc_footprint,
+                profile=ind_profile.model_dump(),
+                inventory=ind_inventory.model_dump(),
+            )
+        ]
 
         response_data = OcrResponse(
             success=True,
@@ -169,7 +198,7 @@ async def manual_utility_entry(
             calculated_footprint_tco2e=ind_calc_footprint,
             profile=ind_profile.model_dump(),
             inventory=ind_inventory.model_dump(),
-            individual_results=individual_results
+            individual_results=individual_results,
         )
 
         logger.info("manual_entry_completed", result={"success": True, "total_kwh": total_kwh})

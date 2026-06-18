@@ -13,7 +13,9 @@ from typing import Annotated, Literal
 
 class StrEnum(str, Enum):
     """Python 3.9-compatible StrEnum substitute."""
+
     pass
+
 
 from pydantic import BaseModel, Field
 
@@ -39,11 +41,6 @@ class ScenarioType(StrEnum):
     REDUCE_CONSUMPTION = "reduce_consumption"
     EXTEND_DEVICES = "extend_devices"
     REDUCE_STREAMING = "reduce_streaming"
-
-
-
-
-
 
 
 class SwitchDietParams(BaseModel):
@@ -92,9 +89,7 @@ class AddRenewableParams(BaseModel):
     switch_to_renewable_tariff: bool = Field(
         default=True, description="Switch to a 100 % renewable electricity tariff."
     )
-    add_solar_panels: bool = Field(
-        default=False, description="Add rooftop solar panels."
-    )
+    add_solar_panels: bool = Field(default=False, description="Add rooftop solar panels.")
     upfront_cost_usd: Annotated[float, Field(ge=0.0, le=50_000.0)] | None = Field(
         default=None, description="Optional installation cost for solar (USD)."
     )
@@ -115,13 +110,13 @@ class ReduceConsumptionParams(BaseModel):
     )
 
 
-
-
 class ExtendDevicesParams(BaseModel):
     """Parameters for extending device lifespan."""
 
     type: Literal[ScenarioType.EXTEND_DEVICES] = ScenarioType.EXTEND_DEVICES
-    new_device_frequency: DeviceFrequency = Field(..., description="Target device upgrade frequency.")
+    new_device_frequency: DeviceFrequency = Field(
+        ..., description="Target device upgrade frequency."
+    )
 
 
 class ReduceStreamingParams(BaseModel):
@@ -131,17 +126,18 @@ class ReduceStreamingParams(BaseModel):
     new_streaming_usage: DailyUsage = Field(..., description="Target streaming usage.")
 
 
-
 Scenario = Annotated[
-    SwitchDietParams | SwitchCarParams | ReduceFlightsParams | SwitchHeatingParams | AddRenewableParams | ReduceConsumptionParams | ExtendDevicesParams | ReduceStreamingParams,
+    SwitchDietParams
+    | SwitchCarParams
+    | ReduceFlightsParams
+    | SwitchHeatingParams
+    | AddRenewableParams
+    | ReduceConsumptionParams
+    | ExtendDevicesParams
+    | ReduceStreamingParams,
     Field(discriminator="type"),
 ]
 """Union of all scenario param models, discriminated on the ``type`` field."""
-
-
-
-
-
 
 
 class CoBenefitType(StrEnum):
@@ -160,12 +156,9 @@ class CoBenefit(BaseModel):
     description: str = Field(
         ..., min_length=1, max_length=500, description="Human-readable explanation."
     )
-    quantified: str | None = Field(default=None, description="Quantified value, e.g. '~$1,500/year'.")
-
-
-
-
-
+    quantified: str | None = Field(
+        default=None, description="Quantified value, e.g. '~$1,500/year'."
+    )
 
 
 class SimulateRequest(BaseModel):
@@ -178,7 +171,9 @@ class SimulateRequest(BaseModel):
         ..., description="User's carbon profile — needed to recompute after scenario change."
     )
     scenario: Scenario | None = Field(default=None, description="What-if scenario to evaluate.")
-    scenarios: list[Scenario] = Field(default_factory=list, description="List of what-if scenarios to stack and evaluate.")
+    scenarios: list[Scenario] = Field(
+        default_factory=list, description="List of what-if scenarios to stack and evaluate."
+    )
 
 
 class SimulateResponse(BaseModel):
@@ -188,9 +183,7 @@ class SimulateResponse(BaseModel):
     ``years_to_break_even`` is only present when ``upfront_cost_usd`` is known.
     """
 
-    original_total: float = Field(
-        ..., ge=0.0, description="Baseline annual total in tCO₂e."
-    )
+    original_total: float = Field(..., ge=0.0, description="Baseline annual total in tCO₂e.")
     new_total: float = Field(
         ..., ge=0.0, description="Projected annual total after applying the scenario."
     )

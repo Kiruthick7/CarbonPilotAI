@@ -12,13 +12,21 @@ from app.models.carbon import (
 from app.services.calculator_service import CalculatorService
 
 
-async def build_inventory_for_data(calculator: CalculatorService, kwh: float, parsed: dict[str, Any]) -> tuple[CarbonProfile, CarbonInventory, float]:
+async def build_inventory_for_data(
+    calculator: CalculatorService, kwh: float, parsed: dict[str, Any]
+) -> tuple[CarbonProfile, CarbonInventory, float]:
     profile = CarbonProfile(
         country_code="US",
         transport=None,
         diet=None,
-        home=HomeProfile(home_size=HomeSize.MEDIUM, heating_type=HeatingType.GAS, num_occupants=2, has_solar=False, renewable_tariff=False),
-        consumption=None
+        home=HomeProfile(
+            home_size=HomeSize.MEDIUM,
+            heating_type=HeatingType.GAS,
+            num_occupants=2,
+            has_solar=False,
+            renewable_tariff=False,
+        ),
+        consumption=None,
     )
 
     calc_result = await calculator.calculate(profile)
@@ -74,7 +82,11 @@ async def build_inventory_for_data(calculator: CalculatorService, kwh: float, pa
             new_breakdown = CategoryBreakdown(
                 category=parsed_cat,
                 total_kgco2e=val_kg,
-                subcategories=[SubcategoryItem(label="Extracted from Bill", kgco2e=val_kg, share_of_category=1.0)]
+                subcategories=[
+                    SubcategoryItem(
+                        label="Extracted from Bill", kgco2e=val_kg, share_of_category=1.0
+                    )
+                ],
             )
             inventory.breakdowns.append(new_breakdown)
             new_total_tco2e += parsed_tco2e

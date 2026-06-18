@@ -60,16 +60,28 @@ class SimulationEngine:
             data["diet"]["diet_type"] = scenario.new_diet.value
 
     def _handle_switch_car(self, data: dict[str, Any], scenario: Any) -> None:
-        if isinstance(scenario, SwitchCarParams) and data.get("transport") and data["transport"].get("car"):
+        if (
+            isinstance(scenario, SwitchCarParams)
+            and data.get("transport")
+            and data["transport"].get("car")
+        ):
             data["transport"]["car"]["car_type"] = scenario.new_car_type.value
             if scenario.new_car_type == CarType.NONE:
                 data["transport"]["car"] = None
 
     def _handle_reduce_flights(self, data: dict[str, Any], scenario: Any) -> None:
-        if isinstance(scenario, ReduceFlightsParams) and data.get("transport") and data["transport"].get("flights"):
+        if (
+            isinstance(scenario, ReduceFlightsParams)
+            and data.get("transport")
+            and data["transport"].get("flights")
+        ):
             flights = data["transport"]["flights"]
-            flights["short_haul_flights"] = max(0, flights["short_haul_flights"] - scenario.reduce_short_haul_by)
-            flights["long_haul_flights"] = max(0, flights["long_haul_flights"] - scenario.reduce_long_haul_by)
+            flights["short_haul_flights"] = max(
+                0, flights["short_haul_flights"] - scenario.reduce_short_haul_by
+            )
+            flights["long_haul_flights"] = max(
+                0, flights["long_haul_flights"] - scenario.reduce_long_haul_by
+            )
 
     def _handle_switch_heating(self, data: dict[str, Any], scenario: Any) -> None:
         if isinstance(scenario, SwitchHeatingParams) and data.get("home"):
@@ -82,9 +94,16 @@ class SimulationEngine:
 
     def _handle_reduce_consumption(self, data: dict[str, Any], scenario: Any) -> None:
         if isinstance(scenario, ReduceConsumptionParams) and data.get("consumption"):
-            data["consumption"]["new_clothing_items_per_year"] = max(0, data["consumption"]["new_clothing_items_per_year"] - scenario.reduce_clothing_by)
-            data["consumption"]["new_electronics_per_year"] = max(0, data["consumption"]["new_electronics_per_year"] - scenario.reduce_electronics_by)
-            data["consumption"]["online_deliveries_per_week"] = max(0.0, data["consumption"]["online_deliveries_per_week"] - scenario.reduce_deliveries_by)
+            data["consumption"]["new_clothing_items_per_year"] = max(
+                0, data["consumption"]["new_clothing_items_per_year"] - scenario.reduce_clothing_by
+            )
+            data["consumption"]["new_electronics_per_year"] = max(
+                0, data["consumption"]["new_electronics_per_year"] - scenario.reduce_electronics_by
+            )
+            data["consumption"]["online_deliveries_per_week"] = max(
+                0.0,
+                data["consumption"]["online_deliveries_per_week"] - scenario.reduce_deliveries_by,
+            )
 
     def _handle_extend_devices(self, data: dict[str, Any], scenario: Any) -> None:
         if isinstance(scenario, ExtendDevicesParams) and data.get("digital"):
@@ -125,7 +144,9 @@ class SimulationEngine:
             if annual:
                 total_annual_saving += annual
 
-        years_bev = round(total_upfront / total_annual_saving, 1) if total_annual_saving > 0 else None
+        years_bev = (
+            round(total_upfront / total_annual_saving, 1) if total_annual_saving > 0 else None
+        )
 
         return SimulateResponse(
             original_total=original.total_tco2e,
@@ -147,49 +168,63 @@ class SimulationEngine:
 
         if stype == ScenarioType.SWITCH_DIET and isinstance(scenario, SwitchDietParams):
             if scenario.new_diet in (DietType.VEGAN, DietType.VEGETARIAN):
-                benefits.append(CoBenefit(
-                    type=CoBenefitType.HEALTH,
-                    description="Reduced risk of heart disease and type-2 diabetes",
-                ))
-                benefits.append(CoBenefit(
-                    type=CoBenefitType.FINANCIAL,
-                    description="Plant-based diets typically save $1,200–$1,800/year on food",
-                    quantified="~$1,500/year",
-                ))
+                benefits.append(
+                    CoBenefit(
+                        type=CoBenefitType.HEALTH,
+                        description="Reduced risk of heart disease and type-2 diabetes",
+                    )
+                )
+                benefits.append(
+                    CoBenefit(
+                        type=CoBenefitType.FINANCIAL,
+                        description="Plant-based diets typically save $1,200–$1,800/year on food",
+                        quantified="~$1,500/year",
+                    )
+                )
 
         elif stype == ScenarioType.SWITCH_CAR and isinstance(scenario, SwitchCarParams):
             if scenario.new_car_type == CarType.ELECTRIC:
-                benefits.append(CoBenefit(
-                    type=CoBenefitType.FINANCIAL,
-                    description="Lower fuel and maintenance costs vs petrol",
-                    quantified="~$1,000–2,000/year",
-                ))
-                benefits.append(CoBenefit(
-                    type=CoBenefitType.AIR_QUALITY,
-                    description="Zero tailpipe emissions improves local air quality",
-                ))
+                benefits.append(
+                    CoBenefit(
+                        type=CoBenefitType.FINANCIAL,
+                        description="Lower fuel and maintenance costs vs petrol",
+                        quantified="~$1,000–2,000/year",
+                    )
+                )
+                benefits.append(
+                    CoBenefit(
+                        type=CoBenefitType.AIR_QUALITY,
+                        description="Zero tailpipe emissions improves local air quality",
+                    )
+                )
 
         elif stype == ScenarioType.REDUCE_FLIGHTS and isinstance(scenario, ReduceFlightsParams):
-            benefits.append(CoBenefit(
-                type=CoBenefitType.FINANCIAL,
-                description="Significant cost savings on flights",
-                quantified=f"~${abs(int(delta * 300))}/year saved",
-            ))
+            benefits.append(
+                CoBenefit(
+                    type=CoBenefitType.FINANCIAL,
+                    description="Significant cost savings on flights",
+                    quantified=f"~${abs(int(delta * 300))}/year saved",
+                )
+            )
 
         elif stype == ScenarioType.SWITCH_HEATING and isinstance(scenario, SwitchHeatingParams):
             if scenario.new_heating_type == HeatingType.HEAT_PUMP:
-                benefits.append(CoBenefit(
-                    type=CoBenefitType.FINANCIAL,
-                    description="Lower running costs than gas in most climates",
-                    quantified="~$500–800/year once installed",
-                ))
+                benefits.append(
+                    CoBenefit(
+                        type=CoBenefitType.FINANCIAL,
+                        description="Lower running costs than gas in most climates",
+                        quantified="~$500–800/year once installed",
+                    )
+                )
 
         elif stype == ScenarioType.EXTEND_DEVICES and isinstance(scenario, ExtendDevicesParams):
-            benefits.append(CoBenefit(
-                type=CoBenefitType.FINANCIAL,
-                description="Save thousands by delaying hardware upgrades",
-                quantified="~$300–800/year",
-            ))
+            benefits.append(
+                CoBenefit(
+                    type=CoBenefitType.FINANCIAL,
+                    description="Save thousands by delaying hardware upgrades",
+                    quantified="~$300–800/year",
+                )
+            )
 
         return benefits
 

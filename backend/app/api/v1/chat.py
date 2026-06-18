@@ -21,9 +21,7 @@ logger = structlog.get_logger(__name__)
 router = APIRouter()
 
 
-async def _event_stream(
-    request: ChatRequest, agent: AgentService
-) -> AsyncGenerator[str, None]:
+async def _event_stream(request: ChatRequest, agent: AgentService) -> AsyncGenerator[str, None]:
     """Convert agent generator output to SSE wire format."""
     try:
         async for chunk in agent.stream_chat(request):
@@ -31,7 +29,13 @@ async def _event_stream(
             yield f"data: {data}\n\n"
     except Exception as e:
         logger.error("chat_stream_error", error=str(e), exc_info=True)
-        error_chunk = {"type": "error", "data": {"message": "An unexpected error occurred during the stream.", "details": str(e)}}
+        error_chunk = {
+            "type": "error",
+            "data": {
+                "message": "An unexpected error occurred during the stream.",
+                "details": str(e),
+            },
+        }
         yield f"data: {json.dumps(error_chunk, default=str)}\n\n"
 
 

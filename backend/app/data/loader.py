@@ -53,10 +53,6 @@ class EmissionFactorLoader:
             country_count=len(self._grid.get("countries", {})),
         )
 
-
-
-
-
     @staticmethod
     def _load_and_validate(path: Path, required_keys: set[str]) -> dict[str, Any]:
         """Read and JSON-parse a file, then verify required top-level keys.
@@ -80,15 +76,9 @@ class EmissionFactorLoader:
 
         missing = required_keys - set(data.keys())
         if missing:
-            raise ValueError(
-                f"Data file {path.name!r} is missing required keys: {sorted(missing)}"
-            )
+            raise ValueError(f"Data file {path.name!r} is missing required keys: {sorted(missing)}")
 
         return data
-
-
-
-
 
     def get_factors(self) -> dict[str, Any]:
         """Return the full emission-factors dictionary.
@@ -117,7 +107,9 @@ class EmissionFactorLoader:
                 country_code=country_code,
                 fallback=_GLOBAL_AVERAGE_GRID_INTENSITY,
             )
-            return float(self._grid.get("global_average_grid_intensity", _GLOBAL_AVERAGE_GRID_INTENSITY))
+            return float(
+                self._grid.get("global_average_grid_intensity", _GLOBAL_AVERAGE_GRID_INTENSITY)
+            )
 
         return float(country_data["grid_intensity"])
 
@@ -167,10 +159,6 @@ class EmissionFactorLoader:
     def benchmarks(self) -> dict[str, Any]:
         """Property access to benchmarks."""
         return self._benchmarks
-
-
-
-
 
 
 def get_loader() -> EmissionFactorLoader:

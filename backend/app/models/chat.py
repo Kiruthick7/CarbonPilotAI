@@ -12,7 +12,10 @@ from enum import Enum
 
 class StrEnum(str, Enum):
     """Python 3.9-compatible StrEnum substitute."""
+
     pass
+
+
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
@@ -37,11 +40,6 @@ class StreamEventType(StrEnum):
     DONE = "done"
 
 
-
-
-
-
-
 class ChatMessage(BaseModel):
     """A single message in the conversation history.
 
@@ -50,9 +48,7 @@ class ChatMessage(BaseModel):
     """
 
     role: MessageRole = Field(..., description="Who authored this message.")
-    content: str = Field(
-        ..., min_length=1, max_length=32_768, description="Message text content."
-    )
+    content: str = Field(..., min_length=1, max_length=32_768, description="Message text content.")
     timestamp: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat(),
         description="ISO-8601 UTC timestamp when the message was created.",
@@ -98,11 +94,6 @@ class ChatRequest(BaseModel):
         max_length=7_000_000,
         description="Optional base64-encoded image (e.g. utility bill) uploaded by the user.",
     )
-
-
-
-
-
 
 
 class ChatStreamEvent(BaseModel):

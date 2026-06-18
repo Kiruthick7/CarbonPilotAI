@@ -12,14 +12,29 @@ from app.services.simulator_service import SimulatorService
 
 logger = structlog.get_logger(__name__)
 
+
 class AgentTools:
-    def __init__(self, calculator: CalculatorService, simulator: SimulatorService, ranker: RankerService, llm_client: LLMClient) -> None:
+    def __init__(
+        self,
+        calculator: CalculatorService,
+        simulator: SimulatorService,
+        ranker: RankerService,
+        llm_client: LLMClient,
+    ) -> None:
         self._calculator = calculator
         self._simulator = simulator
         self._ranker = ranker
         self._llm_client = llm_client
 
-    async def dispatch_tool(self, name: str, args: dict[str, Any], request: ChatRequest, constraints: dict[str, Any], session_constraints: dict[str, Any], session_id: str) -> Any:
+    async def dispatch_tool(
+        self,
+        name: str,
+        args: dict[str, Any],
+        request: ChatRequest,
+        constraints: dict[str, Any],
+        session_constraints: dict[str, Any],
+        session_id: str,
+    ) -> Any:
         if name == "calculate_footprint":
             return await self.tool_calculate(args, request)
         elif name == "simulate_scenario":
@@ -55,8 +70,16 @@ class AgentTools:
             if "diet" not in profile_data:
                 profile_data["diet"] = {"diet_type": "omnivore"}
             else:
-                diet_type = profile_data["diet"].pop("type", None) or profile_data["diet"].get("diet_type", "omnivore")
-                if diet_type not in ["vegan", "vegetarian", "flexitarian", "omnivore", "meat_heavy"]:
+                diet_type = profile_data["diet"].pop("type", None) or profile_data["diet"].get(
+                    "diet_type", "omnivore"
+                )
+                if diet_type not in [
+                    "vegan",
+                    "vegetarian",
+                    "flexitarian",
+                    "omnivore",
+                    "meat_heavy",
+                ]:
                     diet_type = "omnivore"
                 profile_data["diet"]["diet_type"] = diet_type
 
@@ -82,7 +105,7 @@ class AgentTools:
             return {
                 "inventory": result["inventory"].model_dump(),
                 "version": result["calculation_version"],
-                "profile": profile.model_dump()
+                "profile": profile.model_dump(),
             }
         except Exception as e:
             logger.error("tool_calculate_error", error=str(e))
@@ -95,23 +118,33 @@ class AgentTools:
             from pydantic import TypeAdapter
 
             from app.models.simulation import Scenario, SimulateRequest
-            scenario: Scenario = TypeAdapter(Scenario).validate_python({"type": args["scenario_type"], **args["scenario_params"]})
+
+            scenario: Scenario = TypeAdapter(Scenario).validate_python(
+                {"type": args["scenario_type"], **args["scenario_params"]}
+            )
             profile_data = request.profile.model_dump(exclude_none=True) if request.profile else {}
             profile = CarbonProfile.model_validate(profile_data)
-            sim_request = SimulateRequest(inventory=request.inventory, profile=profile, scenario=scenario)
+            sim_request = SimulateRequest(
+                inventory=request.inventory, profile=profile, scenario=scenario
+            )
             result = await self._simulator.simulate(sim_request)
             return result.model_dump()
         except Exception as e:
             logger.error("tool_simulate_error", error=str(e))
             return {"error": "An internal error occurred while processing this action."}
 
-    async def tool_rank(self, args: dict[str, Any], request: ChatRequest, constraints: dict[str, Any]) -> dict[str, Any]:
+    async def tool_rank(
+        self, args: dict[str, Any], request: ChatRequest, constraints: dict[str, Any]
+    ) -> dict[str, Any]:
         try:
             if not request.inventory:
                 return {"error": "No inventory. Run calculate_footprint first."}
             from app.models.actions import RankActionsRequest, UserConstraints
+
             merged = {**constraints, **(args.get("constraints") or {})}
-            rank_request = RankActionsRequest(inventory=request.inventory, constraints=UserConstraints.model_validate(merged))
+            rank_request = RankActionsRequest(
+                inventory=request.inventory, constraints=UserConstraints.model_validate(merged)
+            )
             profile_data = request.profile.model_dump(exclude_none=True) if request.profile else {}
             profile = CarbonProfile.model_validate(profile_data)
             result = await self._ranker.rank(rank_request, profile)
@@ -120,7 +153,13 @@ class AgentTools:
             logger.error("tool_rank_error", error=str(e))
             return {"error": "An internal error occurred while processing this action."}
 
-    def tool_record_constraint(self, args: dict[str, Any], session_id: str, constraints: dict[str, Any], session_constraints: dict[str, Any]) -> dict[str, Any]:
+    def tool_record_constraint(
+        self,
+        args: dict[str, Any],
+        session_id: str,
+        constraints: dict[str, Any],
+        session_constraints: dict[str, Any],
+    ) -> dict[str, Any]:
         constraint_type = args.get("constraint_type", "")
         constraint_map: dict[str, dict[str, Any]] = {
             "rents_home": {"lifestyle_flags": {"rents_home": True}},
@@ -172,7 +211,7 @@ class AgentTools:
                                 "type": "image_url",
                                 "image_url": {
                                     "url": image_url,
-                                }
+                                },
                             },
                         ],
                     }
@@ -186,15 +225,26 @@ class AgentTools:
             raw_data = json.loads(raw_content)
 
             from pydantic import BaseModel, Field
+
             class ParsedBill(BaseModel):
-                total_kwh: float | None = Field(default=None, ge=0, le=100000, description="Total kWh used")
-                period_months: int = Field(default=1, ge=1, le=12, description="Billing period in months")
-                tariff_name: str | None = Field(default=None, description="Name of the tariff or plan")
-                is_renewable: bool | None = Field(default=None, description="Whether the plan is 100% renewable")
+                total_kwh: float | None = Field(
+                    default=None, ge=0, le=100000, description="Total kWh used"
+                )
+                period_months: int = Field(
+                    default=1, ge=1, le=12, description="Billing period in months"
+                )
+                tariff_name: str | None = Field(
+                    default=None, description="Name of the tariff or plan"
+                )
+                is_renewable: bool | None = Field(
+                    default=None, description="Whether the plan is 100% renewable"
+                )
 
             validated = ParsedBill.model_validate(raw_data)
             return validated.model_dump()
 
         except Exception as e:
             logger.error("bill_parse_error", error=str(e))
-            return {"error": "Could not read a valid utility bill from that image. Please upload a clearer photo or enter your usage manually."}
+            return {
+                "error": "Could not read a valid utility bill from that image. Please upload a clearer photo or enter your usage manually."
+            }

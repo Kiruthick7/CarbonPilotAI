@@ -4,6 +4,7 @@ import structlog
 
 try:
     from groq import AsyncGroq
+
     GROQ_AVAILABLE = True
 except ImportError:
     GROQ_AVAILABLE = False
@@ -18,6 +19,7 @@ FALLBACK_MODELS = [
     "llama-3.1-8b-instant",
     "mixtral-8x7b-32768",
 ]
+
 
 class LLMClient:
     def __init__(self) -> None:

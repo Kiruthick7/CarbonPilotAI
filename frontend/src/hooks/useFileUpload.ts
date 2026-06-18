@@ -1,5 +1,5 @@
-import { useState, useRef, RefObject } from 'react';
-import { validateFiles } from '../utils/fileValidation';
+import { useState, useRef, RefObject } from "react";
+import { validateFiles } from "../utils/fileValidation";
 
 interface UseFileUploadReturn {
   files: File[];
@@ -19,10 +19,17 @@ export const useFileUpload = (isUploading: boolean): UseFileUploadReturn => {
       const newFiles = Array.from(e.target.files);
       const validFiles = validateFiles(newFiles);
 
-      setFiles(prev => {
-        const existingNames = new Set(prev.map(f => f.name));
-        const uniqueNewFiles = validFiles.filter(f => !existingNames.has(f.name));
-        return [...prev, ...uniqueNewFiles];
+      setFiles((prev) => {
+        const existingNames = new Set(prev.map((f) => f.name));
+        const uniqueNewFiles = validFiles.filter(
+          (f) => !existingNames.has(f.name),
+        );
+        const combined = [...prev, ...uniqueNewFiles];
+        if (combined.length > 10) {
+          alert("Maximum of 10 files allowed.");
+          return combined.slice(0, 10);
+        }
+        return combined;
       });
     }
 
@@ -32,7 +39,7 @@ export const useFileUpload = (isUploading: boolean): UseFileUploadReturn => {
   };
 
   const removeFile = (indexToRemove: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== indexToRemove));
+    setFiles((prev) => prev.filter((_, i) => i !== indexToRemove));
   };
 
   const handleUploadClick = () => {
@@ -43,5 +50,12 @@ export const useFileUpload = (isUploading: boolean): UseFileUploadReturn => {
     setFiles([]);
   };
 
-  return { files, fileInputRef, handleFileChange, removeFile, handleUploadClick, clearFiles };
+  return {
+    files,
+    fileInputRef,
+    handleFileChange,
+    removeFile,
+    handleUploadClick,
+    clearFiles,
+  };
 };
