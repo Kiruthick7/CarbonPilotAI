@@ -15,7 +15,13 @@ test.describe('Flow 1 - OCR Upload Journey', () => {
 
 
     await page.route('http://127.0.0.1:8000/v1/calculate', async route => {
-      await route.fulfill({ json: { inventory: { total_tco2e: 7.88, breakdowns: [{ category: "digital", total_kgco2e: 160 }] } } });
+      await route.fulfill({ json: { inventory: { total_tco2e: 7.88, breakdowns: [
+        { category: "home", total_kgco2e: 2450 },
+        { category: "transport", total_kgco2e: 1820 },
+        { category: "diet", total_kgco2e: 2310 },
+        { category: "consumption", total_kgco2e: 1140 },
+        { category: "digital", total_kgco2e: 160 }
+      ] } } });
     });
 
     
