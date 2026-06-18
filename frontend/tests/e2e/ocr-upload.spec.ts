@@ -2,6 +2,16 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Flow 1 - OCR Upload Journey', () => {
   test('User can upload utility bill and view dashboard', async ({ page }) => {
+
+    await page.route('http://127.0.0.1:8000/v1/actions/rank', async route => {
+      await route.fulfill({ json: { actions: [], total_achievable_reduction: 0 } });
+    });
+
+
+    await page.route('http://127.0.0.1:8000/v1/calculate', async route => {
+      await route.fulfill({ json: { inventory: { total_tco2e: 7.88, breakdowns: [{ category: "digital", total_kgco2e: 160 }] } } });
+    });
+
     
     await page.route('http://127.0.0.1:8000/v1/ocr/upload', async route => {
       const json = {
@@ -66,7 +76,10 @@ test.describe('Flow 1 - OCR Upload Journey', () => {
     await page.check('input#privacy-consent');
 
     
+    
     await page.click('button:has-text("Process & Continue")');
+    await page.click('button:has-text("Finish & View Dashboard")');
+
     
     
     await page.waitForURL('**/dashboard');

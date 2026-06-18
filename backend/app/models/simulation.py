@@ -21,10 +21,10 @@ from app.models.carbon import (
     CarbonInventory,
     CarbonProfile,
     CarType,
+    DailyUsage,
+    DeviceFrequency,
     DietType,
     HeatingType,
-    DeviceFrequency,
-    DailyUsage,
 )
 
 

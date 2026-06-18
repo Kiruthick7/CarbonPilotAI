@@ -288,8 +288,9 @@ class AgentService:
         try:
             if not request.inventory:
                 return {"error": "No inventory. Run calculate_footprint first."}
-            from app.models.simulation import Scenario, SimulateRequest
             from pydantic import TypeAdapter
+
+            from app.models.simulation import Scenario, SimulateRequest
             scenario = TypeAdapter(Scenario).validate_python({"type": args["scenario_type"], **args["scenario_params"]})
             profile_data = request.profile.model_dump(exclude_none=True) if request.profile else {}
             profile = CarbonProfile.model_validate(profile_data)

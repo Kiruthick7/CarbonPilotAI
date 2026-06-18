@@ -46,7 +46,6 @@ class SlidingWindowRateLimiter(BaseHTTPMiddleware):
         max_req, window = limit_cfg
         ip_hash = self._hash_ip(request.client.host if request.client else "unknown")
         key = f"ratelimit:{ip_hash}:{path}"
-        now = time.time()
 
 
 
